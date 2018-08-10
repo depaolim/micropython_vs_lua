@@ -1,0 +1,12 @@
+__pycache__
+.hg
+.hgignore
+.vagrant
+build
+cscope.out
+libmicropython.a
+lua-5.3.5
+lua-5.3.5.tar.gz
+shell_lua
+shell_upy
+*.o
