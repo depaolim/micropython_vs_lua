@@ -1,7 +1,20 @@
 MPTOP = micropython
 LUATOP = lua-5.3.5
+PYTOP = $(VIRTUAL_ENV)
 
 all: test
+
+shell_py: shell_py.o emb_py.o
+	# python3-config --ldflags
+	g++ -o shell_py shell_py.o emb_py.o -L$(PYTOP)/lib/python3.6/config-3.6m-x86_64-linux-gnu -lpython3.6m -lpthread -ldl -lutil -lm -Xlinker -export-dynamic
+
+shell_py.o: shell_py.cpp emb.h
+	# python3-config --cflags
+	g++ -std=c++11 -c shell_py.cpp -I$(PYTOP)/include/python3.6m -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall
+
+emb_py.o: emb_py.cpp emb.h
+	# python3-config --cflags
+	g++ -std=c++11 -c emb_py.cpp -I$(PYTOP)/include/python3.6m -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall
 
 shell_upy: shell_upy.o -lmicropython
 	g++ -o shell_upy shell_upy.o -lmicropython -L.
@@ -29,7 +42,7 @@ shell_lua: lua shell_lua.o
 shell_lua.o: shell_lua.cpp
 	g++ -std=c++11 -c shell_lua.cpp -I$(LUATOP)/src
 
-test: shell_upy shell_lua
+test: shell_py shell_upy shell_lua
 	python3 tests.py
 
 test_threads:
@@ -41,5 +54,12 @@ cscope:
 	cscope -R
 
 clean:
-	rm -rf shell_upy shell_lua *.o libmicropython.a build __pycache__ cscope.out $(LUATOP) $(LUATOP).tar.gz
+	rm -rf shell_upy shell_lua shell_py
+	rm -rf *.o libmicropython.a build
+	rm -rf __pycache__
+	rm -rf cscope.out
+	rm -rf $(LUATOP)
+
+clean_all: clean
+	rm -rf $(LUATOP).tar.gz
 	git submodule deinit micropython

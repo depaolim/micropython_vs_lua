@@ -8,5 +8,6 @@ libmicropython.a
 lua-5.3.5
 lua-5.3.5.tar.gz
 shell_lua
+shell_py
 shell_upy
 *.o
