@@ -1,4 +1,4 @@
-#include <iostream>
+#include <stdio.h>
 
 #include "emb.h"
 
@@ -18,7 +18,7 @@ static void print_exception() {
         return;
     PyObject *type = (PyObject *) Py_TYPE(value);
     const char *className = PyExceptionClass_Name(type);
-    std::cerr << className << std::endl;
+    fprintf(stderr, "%s\n", className);
     PyErr_Clear();
     Py_XDECREF(exception);
     Py_XDECREF(value);
@@ -29,7 +29,7 @@ static void print_exception() {
 int setup(int argc, char *argv[]) {
     program = Py_DecodeLocale(argv[0], NULL);
     if (program == NULL) {
-        std::cerr << "Fatal error: cannot decode argv[0]" << std::endl;
+        fprintf(stderr, "%s\n", "Fatal error: cannot decode argv[0]");
         return 1;
     }
     Py_SetProgramName(program);  /* optional but recommended */

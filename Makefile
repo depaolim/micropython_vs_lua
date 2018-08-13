@@ -12,9 +12,9 @@ shell_py.o: shell_py.cpp emb.h
 	# python3-config --cflags
 	g++ -std=c++11 -c shell_py.cpp -I$(PYTOP)/include/python3.6m -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall
 
-emb_py.o: emb_py.cpp emb.h
+emb_py.o: emb_py.c emb.h
 	# python3-config --cflags
-	g++ -std=c++11 -c emb_py.cpp -I$(PYTOP)/include/python3.6m -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall
+	gcc -std=c99 -c emb_py.c -I/home/depaolim/Envs/micropython_vs_lua/include/python3.6m -I/home/depaolim/Envs/micropython_vs_lua/include/python3.6m -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall
 
 shell_upy: shell_upy.o -lmicropython
 	g++ -o shell_upy shell_upy.o -lmicropython -L.
@@ -63,3 +63,4 @@ clean:
 clean_all: clean
 	rm -rf $(LUATOP).tar.gz
 	git submodule deinit micropython
+	git submodule deinit cpython
