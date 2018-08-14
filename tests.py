@@ -2,14 +2,36 @@ import subprocess
 import unittest
 
 
-class Shell:
-    def __init__(self, lang):
-        prog = "./shell_" + lang
+class Prog:
+    def __init__(self, *cmd):
         self.shell = subprocess.Popen(
-                prog, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     def __getattr__(self, item):
         return getattr(self.shell, item)
+
+
+class Shell(Prog):
+    def __init__(self, lang):
+        super().__init__("./shell_" + lang)
+
+
+class TestElements(unittest.TestCase):
+    def test_ok(self):
+        prog = Prog("./elements")
+        prog.stdin.write(b"<xml><tag></tag></xml>")
+        stdoutdata, stderrdata = prog.communicate()
+        self.assertEqual(prog.returncode, 0)
+        self.assertIn(b"tag", stdoutdata)
+        self.assertFalse(stderrdata)
+
+    def test_nok(self):
+        prog = Prog("./elements")
+        prog.stdin.write(b"<xml></xml-wrong>")
+        stdoutdata, stderrdata = prog.communicate()
+        self.assertNotEqual(prog.returncode, 0)
+        self.assertIn(b"xml", stdoutdata)
+        self.assertIn(b"mismatched tag at line 1", stderrdata)
 
 
 class TestPy(unittest.TestCase):

@@ -1,6 +1,7 @@
 MPTOP = micropython
 LUATOP = lua-5.3.5
 PYTOP = cpython
+EXPATTOP = libexpat
 
 all: test
 
@@ -48,7 +49,20 @@ shell_lua: lua shell.o emb_lua.o
 emb_lua.o: lua emb_lua.cpp
 	g++ -std=c++11 -c emb_lua.cpp -I$(LUATOP)/src
 
-test: shell_py shell_upy shell_lua
+elements: expat
+	gcc -std=c99 -c elements.c -I$(EXPATTOP)/expat/lib
+	g++ -o elements elements.o -lexpat -L$(EXPATTOP)/expat/lib
+	# ./elements < $(EXPATTOP)/testdata/largefiles/nes96.xml
+
+expat: $(EXPATTOP)/expat $(EXPATTOP)/expat/lib/libexpat.la
+
+$(EXPATTOP)/expat:
+	git submodule update --init --recursive
+
+$(EXPATTOP)/expat/lib/libexpat.la:
+	(cd $(EXPATTOP)/expat; mkdir -p m4; ./buildconf.sh; ./configure --without-docbook; make)
+
+test: shell_py shell_upy shell_lua elements
 	(export PYTHONHOME=$(PYTOP) ; export PYTHONPATH=$(PYTOP)/Lib:$(PYTOP)/build/lib.linux-x86_64-3.8 ; $(PYTOP)/python tests.py)
 
 test_threads:
@@ -60,13 +74,15 @@ cscope:
 	cscope -R
 
 clean:
-	rm -rf shell_upy shell_lua shell_py
+	rm -rf shell_upy shell_lua shell_py elements
 	rm -rf *.o libmicropython.a build
 	rm -rf __pycache__
 	rm -rf cscope.out
 	rm -rf $(LUATOP)
+	rm -rf $(EXPATTOP)/expat/lib/libexpat.la
 
 clean_all: clean
 	rm -rf $(LUATOP).tar.gz
 	git submodule deinit $(MPTOP)
 	git submodule deinit $(PYTOP)
+	git submodule deinit $(EXPATTOP)

@@ -7,7 +7,7 @@ Some python tests to verify the stuff
 Prerequisites for Ubuntu:
 
 ```
-  sudo apt install build-essential unzip
+  sudo apt install build-essential unzip libtool
 ```
 
 To download, build everything and run the tests:
