@@ -18,7 +18,7 @@ class Shell(Prog):
 
 class TestElements(unittest.TestCase):
     def test_ok(self):
-        prog = Prog("./elements")
+        prog = Prog("./test_elements")
         prog.stdin.write(b"<xml><tag></tag></xml>")
         stdoutdata, stderrdata = prog.communicate()
         self.assertEqual(prog.returncode, 0)
@@ -26,7 +26,7 @@ class TestElements(unittest.TestCase):
         self.assertFalse(stderrdata)
 
     def test_nok(self):
-        prog = Prog("./elements")
+        prog = Prog("./test_elements")
         prog.stdin.write(b"<xml></xml-wrong>")
         stdoutdata, stderrdata = prog.communicate()
         self.assertNotEqual(prog.returncode, 0)

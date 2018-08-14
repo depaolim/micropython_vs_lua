@@ -33,7 +33,13 @@ emb_upy.o: emb_upy.c
 -lmicropython:
 	$(MAKE) -f $(MPTOP)/examples/embedding/Makefile.upylib MPTOP=$(MPTOP)
 
-lua: $(LUATOP).tar.gz $(LUATOP)/src/lua
+shell_lua: shell.o emb_lua.o $(LUATOP)/src/lua
+	g++ -o shell_lua shell.o emb_lua.o -llua -lm -ldl -pthread -L$(LUATOP)/src
+
+emb_lua.o: emb_lua.cpp $(LUATOP)/src/lua
+	g++ -std=c++11 -c emb_lua.cpp -I$(LUATOP)/src
+
+-llua: $(LUATOP).tar.gz $(LUATOP)/src/lua
 	$(LUATOP)/src/lua fac.lua
 
 $(LUATOP).tar.gz:
@@ -43,26 +49,18 @@ $(LUATOP)/src/lua:
 	tar zxf $(LUATOP).tar.gz
 	(cd $(LUATOP); make linux test)
 
-shell_lua: lua shell.o emb_lua.o
-	g++ -o shell_lua shell.o emb_lua.o -llua -lm -ldl -pthread -L$(LUATOP)/src
+test_elements: test_elements.o -lexpat
+	g++ -o test_elements test_elements.o -lexpat -L$(EXPATTOP)/expat/lib
+	# ./test_elements < $(EXPATTOP)/testdata/largefiles/nes96.xml
 
-emb_lua.o: lua emb_lua.cpp
-	g++ -std=c++11 -c emb_lua.cpp -I$(LUATOP)/src
+test_elements.o: test_elements.c -lexpat
+	gcc -std=c99 -c test_elements.c -I$(EXPATTOP)/expat/lib
 
-elements: expat
-	gcc -std=c99 -c elements.c -I$(EXPATTOP)/expat/lib
-	g++ -o elements elements.o -lexpat -L$(EXPATTOP)/expat/lib
-	# ./elements < $(EXPATTOP)/testdata/largefiles/nes96.xml
-
-expat: $(EXPATTOP)/expat $(EXPATTOP)/expat/lib/libexpat.la
-
-$(EXPATTOP)/expat:
+-lexpat:
 	git submodule update --init --recursive
-
-$(EXPATTOP)/expat/lib/libexpat.la:
 	(cd $(EXPATTOP)/expat; mkdir -p m4; ./buildconf.sh; ./configure --without-docbook; make)
 
-test: shell_py shell_upy shell_lua elements
+test: shell_py shell_upy shell_lua test_elements
 	(export PYTHONHOME=$(PYTOP) ; export PYTHONPATH=$(PYTOP)/Lib:$(PYTOP)/build/lib.linux-x86_64-3.8 ; $(PYTOP)/python tests.py)
 
 test_threads:
@@ -74,7 +72,7 @@ cscope:
 	cscope -R
 
 clean:
-	rm -rf shell_upy shell_lua shell_py elements
+	rm -rf shell_upy shell_lua shell_py test_elements
 	rm -rf *.o libmicropython.a build
 	rm -rf __pycache__
 	rm -rf cscope.out
