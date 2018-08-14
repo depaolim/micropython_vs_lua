@@ -42,11 +42,11 @@ $(LUATOP)/src/lua:
 	tar zxf $(LUATOP).tar.gz
 	(cd $(LUATOP); make linux test)
 
-shell_lua: lua shell_lua.o
-	g++ -o shell_lua shell_lua.o -llua -lm -ldl -pthread -L$(LUATOP)/src
+shell_lua: lua shell.o emb_lua.o
+	g++ -o shell_lua shell.o emb_lua.o -llua -lm -ldl -pthread -L$(LUATOP)/src
 
-shell_lua.o: shell_lua.cpp
-	g++ -std=c++11 -c shell_lua.cpp -I$(LUATOP)/src
+emb_lua.o: lua emb_lua.cpp
+	g++ -std=c++11 -c emb_lua.cpp -I$(LUATOP)/src
 
 test: shell_py shell_upy shell_lua
 	(export PYTHONHOME=$(PYTOP) ; export PYTHONPATH=$(PYTOP)/Lib:$(PYTOP)/build/lib.linux-x86_64-3.8 ; $(PYTOP)/python tests.py)

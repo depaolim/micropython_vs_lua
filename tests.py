@@ -161,7 +161,7 @@ class TestLua(unittest.TestCase):
         shell = Shell("./shell_lua")
         shell.stdin.write(b"_sleep(10)\n")
         stdoutdata, stderrdata = shell.communicate()
-        self.assertEqual(shell.returncode, 0)
+        self.assertNotEqual(shell.returncode, 0)
         self.assertTrue(stderrdata)
 
     def test_call_a_private_function(self):
