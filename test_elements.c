@@ -23,6 +23,13 @@ endElement(void *userData, const XML_Char *name)
   *depthPtr -= 1;
 }
 
+static void XMLCALL
+characterData(void *userData, const XML_Char *str, int len)
+{
+  int *depthPtr = (int *)userData;
+  fwrite(str, 1, len, stdout);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -35,6 +42,7 @@ main(int argc, char *argv[])
 
   XML_SetUserData(parser, &depth);
   XML_SetElementHandler(parser, startElement, endElement);
+  XML_SetCharacterDataHandler(parser, characterData);
   do {
     size_t len = fread(buf, 1, sizeof(buf), stdin);
     done = len < sizeof(buf);

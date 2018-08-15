@@ -34,6 +34,16 @@ class TestElements(unittest.TestCase):
         self.assertIn(b"mismatched tag at line 1", stderrdata)
 
 
+    def test_characters(self):
+        prog = Prog("./test_elements")
+        prog.stdin.write(b"<xml><ctag>SOME</ctag><ctag2> CHARACTERS</ctag2></xml>")
+        stdoutdata, stderrdata = prog.communicate()
+        self.assertEqual(prog.returncode, 0)
+        self.assertIn(b"SOME", stdoutdata)
+        self.assertIn(b" CHARACTERS", stdoutdata)
+        self.assertFalse(stderrdata)
+
+
 class TestPy(unittest.TestCase):
     def test_print(self):
         shell = Shell("py")
