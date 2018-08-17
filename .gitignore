@@ -4,6 +4,7 @@ __pycache__
 .vagrant
 build
 cscope.out
+docs
 libmicropython.a
 lua-5.3.5
 lua-5.3.5.tar.gz
