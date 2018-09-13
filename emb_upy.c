@@ -14,6 +14,9 @@
 static const long heap_size = (1024 * 1024) * (sizeof(mp_uint_t) / 4);
 static char* heap;
 
+static int g_argc;
+static char** g_argv;
+
 STATIC void stderr_print_strn(void *env, const char *str, size_t len) {
     fwrite(str, 1, len, stderr);
 }
@@ -53,6 +56,9 @@ mp_obj_t execute_from_str(const char* const str) {
 
 
 int setup(int argc, char *argv[]) {
+    g_argc = argc;
+    g_argv = argv;
+
     // Initialized stack limit
     mp_stack_set_limit(40000 * (BYTES_PER_WORD / 4));
 
@@ -77,7 +83,25 @@ int execute(const char* const command) {
 }
 
 
+int show_globals() {
+    // UGLY FUNCTION just to check the final global state
+    printf("float globals:\n");
+    for (int idx = 1; idx < g_argc; idx++)
+    {
+        mp_map_elem_t *elem = mp_map_lookup(&mp_globals_get()->map, MP_OBJ_NEW_QSTR(QSTR_FROM_STR_STATIC(g_argv[idx])), MP_MAP_LOOKUP);
+        printf("%s = ", g_argv[idx]);
+        if (elem)
+            printf("%f", mp_obj_get_float(elem->value));
+        else
+            printf("<UNDEF>");
+        printf("\n");
+    }
+    return 0;
+}
+
+
 int teardown() {
+    show_globals();
     gc_sweep_all();
     mp_deinit();
     free(heap);

@@ -123,7 +123,7 @@ class TestUpy(unittest.TestCase):
         self.assertFalse(stderrdata)
 
     def test_print_a_variable_value(self):
-        shell = Shell("upy")
+        shell = Prog("./shell_upy", "a", "undef")
         shell.stdin.write(b"""
 a = 10
 print(a)
@@ -131,6 +131,8 @@ print(a)
         stdoutdata, stderrdata = shell.communicate()
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"10", stdoutdata)
+        self.assertIn(b"globals:\na = 10.0", stdoutdata)
+        self.assertIn(b"undef = <UNDEF>", stdoutdata)
         self.assertFalse(stderrdata)
 
     def test_call_a_non_existent_function(self):
