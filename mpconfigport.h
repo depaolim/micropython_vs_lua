@@ -88,9 +88,11 @@
 #define MICROPY_PY_UBINASCII        (0)
 
 extern const struct _mp_obj_module_t mp_module_os;
+extern const struct _mp_obj_module_t example_user_cmodule;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_os) }, \
+    { MP_ROM_QSTR(MP_QSTR_example), MP_ROM_PTR(&example_user_cmodule) }, \
 
 #define MICROPY_PORT_ROOT_POINTERS \
 

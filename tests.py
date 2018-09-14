@@ -131,8 +131,7 @@ print(a)
         stdoutdata, stderrdata = shell.communicate()
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"10", stdoutdata)
-        self.assertIn(b"globals:\na = 10.0", stdoutdata)
-        self.assertIn(b"undef = <UNDEF>", stdoutdata)
+        self.assertIn(b"globals:\na = 10.00\nundef = <UNDEF>\n", stdoutdata)
         self.assertFalse(stderrdata)
 
     def test_call_a_non_existent_function(self):
@@ -171,6 +170,19 @@ print("return value:", a)
         self.assertFalse(stderrdata)
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"return value: 3.0", stdoutdata)
+
+
+    def test_import_c_implemented_module(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import example
+a = example.double(1000)
+print("return value:", a)
+        """)
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertFalse(stderrdata)
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 2000", stdoutdata)
 
 
 class TestLua(unittest.TestCase):

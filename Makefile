@@ -3,6 +3,8 @@ LUATOP = lua-5.3.5
 PYTOP = cpython
 EXPATTOP = libexpat
 
+SRC_QSTR += modcexample.c
+
 all: test
 
 shell.o: shell.cpp emb.h
@@ -23,15 +25,19 @@ $(PYTOP)/Makefile:
 	git submodule update --init --recursive
 	(cd $(PYTOP); ./configure) 
 
-shell_upy: shell.o emb_upy.o -lmicropython
-	g++ -o shell_upy shell.o emb_upy.o -lmicropython -L.
+shell_upy: -lmicropython shell.o emb_upy.o modcexample.o
+	g++ -o shell_upy shell.o emb_upy.o modcexample.o -lmicropython -L.
 
 emb_upy.o: emb_upy.c
 	git submodule update --init --recursive
 	gcc -std=c99 -c emb_upy.c -I$(MPTOP) -I. -DNO_QSTR -g
 
+modcexample.o: modcexample.c
+	git submodule update --init --recursive
+	gcc -std=c99 -c modcexample.c -I$(MPTOP) -I. -Ibuild -g
+
 -lmicropython:
-	$(MAKE) -f $(MPTOP)/examples/embedding/Makefile.upylib MPTOP=$(MPTOP)
+	$(MAKE) -f Makefile.upylib MPTOP=$(MPTOP)
 
 shell_lua: shell.o emb_lua.o $(LUATOP)/src/lua
 	g++ -o shell_lua shell.o emb_lua.o -llua -lm -ldl -pthread -L$(LUATOP)/src

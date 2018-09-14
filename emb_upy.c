@@ -91,7 +91,7 @@ int show_globals() {
         mp_map_elem_t *elem = mp_map_lookup(&mp_globals_get()->map, MP_OBJ_NEW_QSTR(QSTR_FROM_STR_STATIC(g_argv[idx])), MP_MAP_LOOKUP);
         printf("%s = ", g_argv[idx]);
         if (elem)
-            printf("%f", mp_obj_get_float(elem->value));
+            printf("%.2f", mp_obj_get_float(elem->value));
         else
             printf("<UNDEF>");
         printf("\n");
