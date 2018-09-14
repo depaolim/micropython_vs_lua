@@ -41,9 +41,10 @@ MP_DEFINE_CONST_FUN_OBJ_1(log_10_obj, log_10);
 mp_obj_t execute_from_str(const char* const str) {
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        mp_lexer_t *lex = mp_lexer_new_from_str_len(0/*MP_QSTR_*/, str, strlen(str), false);
+        qstr src_name = 1/*MP_QSTR_*/;
+        mp_lexer_t *lex = mp_lexer_new_from_str_len(src_name, str, strlen(str), false);
         mp_parse_tree_t pt = mp_parse(lex, MP_PARSE_FILE_INPUT);
-        mp_obj_t module_fun = mp_compile(&pt, lex->source_name, MP_EMIT_OPT_NONE, false);
+        mp_obj_t module_fun = mp_compile(&pt, src_name, MP_EMIT_OPT_NONE, false);
         mp_call_function_0(module_fun);
         nlr_pop();
         return 0;
@@ -112,9 +113,11 @@ int teardown() {
 // the following functions are duplicated (see ports/unix/main.c)
 // see https://stackoverflow.com/a/37521541/2405599
 // in short: an .o file in a lib is promoted to necessary if any function in it is necessary
+//
 
 mp_import_stat_t mp_import_stat(const char *path) {
-    return MP_IMPORT_STAT_NO_EXIST;
+    // limited implementation
+    return MP_IMPORT_STAT_FILE;
 }
 
 

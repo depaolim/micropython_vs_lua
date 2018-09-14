@@ -171,7 +171,6 @@ print("return value:", a)
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"return value: 3.0", stdoutdata)
 
-
     def test_import_c_implemented_module(self):
         shell = Shell("upy")
         shell.stdin.write(b"""
@@ -183,6 +182,19 @@ print("return value:", a)
         self.assertFalse(stderrdata)
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"return value: 2000", stdoutdata)
+
+    def test_import_external_module(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import pyexamplemod as exm
+a = exm.double(3000)
+print("return value:", a)
+        """)
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertFalse(stderrdata)
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 6000", stdoutdata)
+
 
 
 class TestLua(unittest.TestCase):
