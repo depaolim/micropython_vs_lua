@@ -195,6 +195,16 @@ print("return value:", a)
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"return value: 6000", stdoutdata)
 
+    def test_import_c_implemented_module_with_constant(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import example
+print("return value:", example.BeforeSend)
+        """)
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertFalse(stderrdata)
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 1", stdoutdata)
 
 
 class TestLua(unittest.TestCase):
