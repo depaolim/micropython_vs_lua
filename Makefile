@@ -66,7 +66,13 @@ test_elements.o: test_elements.c -lexpat
 	git submodule update --init --recursive
 	(cd $(EXPATTOP)/expat; mkdir -p m4; ./buildconf.sh; ./configure --without-docbook; make)
 
-test: shell_py shell_upy shell_lua test_elements
+dboxpy: dboxpy.o
+	gcc -o $@ $^
+
+dboxpy.o: dboxpy.cpp
+	g++ -std=c++11 -c $^
+
+test: shell_py shell_upy shell_lua test_elements dboxpy
 	(export PYTHONHOME=$(PYTOP) ; export PYTHONPATH=$(PYTOP)/Lib:$(PYTOP)/build/lib.linux-x86_64-3.8 ; $(PYTOP)/python tests.py)
 
 test_threads:
@@ -77,8 +83,10 @@ test_threads:
 cscope:
 	cscope -R
 
+.PHONY: clean clean_all
+
 clean:
-	rm -rf shell_upy shell_lua shell_py test_elements
+	rm -rf shell_upy shell_lua shell_py test_elements dboxpy
 	rm -rf *.o libmicropython.a build
 	rm -rf __pycache__
 	rm -rf cscope.out

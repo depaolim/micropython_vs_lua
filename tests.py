@@ -16,6 +16,12 @@ class Shell(Prog):
         super().__init__("./shell_" + lang)
 
 
+class TestDboxPy(unittest.TestCase):
+    def test(self):
+        prog = Prog("./dboxpy")
+        stdoutdata, stderrdata = prog.communicate()
+
+
 class TestElements(unittest.TestCase):
     def test_ok(self):
         prog = Prog("./test_elements")

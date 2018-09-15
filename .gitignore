@@ -4,6 +4,7 @@ __pycache__
 .vagrant
 build
 cscope.out
+dboxpy
 docs
 libmicropython.a
 lua-5.3.5
