@@ -20,6 +20,7 @@ STATIC mp_obj_t example_double(mp_obj_t x_obj) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(example_double_obj, example_double);
 
 
+// Some constants
 enum {
     Undefined        = 0x00,
     BeforeSend       = 0x01,
@@ -28,8 +29,64 @@ enum {
 };
 
 
-// Define all properties of the example module, which currently are the name (a
-// string) and a function.
+// New type
+
+mp_obj_t mp_obj_new_polar_point(mp_float_t radius, mp_float_t theta);
+
+typedef struct {
+    mp_obj_base_t base;
+    mp_float_t radius;
+    mp_float_t theta;
+} mp_obj_polar_point_t;
+
+
+STATIC mp_obj_t polar_point_make_new(const mp_obj_type_t *type_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    (void)type_in;
+    mp_arg_check_num(n_args, n_kw, 0, 2, false);
+
+    switch (n_args) {
+        case 2: {
+            mp_float_t radius = mp_obj_get_float(args[0]);
+            mp_float_t theta = mp_obj_get_float(args[1]);
+            return mp_obj_new_polar_point(radius, theta);
+        }
+        case 0:
+        default:
+            return mp_obj_new_polar_point(0, 0);
+    }
+}
+
+STATIC void polar_point_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    if (dest[0] != MP_OBJ_NULL) {
+        // not load attribute
+        return;
+    }
+    mp_obj_polar_point_t *self = MP_OBJ_TO_PTR(self_in);
+    if (attr == MP_QSTR_radius) {
+        dest[0] = mp_obj_new_float(self->radius);
+    } else if (attr == MP_QSTR_theta) {
+        dest[0] = mp_obj_new_float(self->theta);
+    }
+}
+
+const mp_obj_type_t mp_type_polar_point = {
+    { &mp_type_type },
+    .name = MP_QSTR_PolarPoint,
+    .make_new = polar_point_make_new,
+    .attr = polar_point_attr,
+};
+
+
+mp_obj_t mp_obj_new_polar_point(mp_float_t radius, mp_float_t theta) {
+    mp_obj_polar_point_t *o = m_new_obj(mp_obj_polar_point_t);
+    o->base.type = &mp_type_polar_point;
+    o->radius = radius;
+    o->theta = theta;
+    return MP_OBJ_FROM_PTR(o);
+}
+
+
+// Define all properties of the example module
 // All identifiers and strings are written as MP_QSTR_xxx and will be
 // optimized to word-sized integers by the build system (interned strings).
 STATIC const mp_rom_map_elem_t example_module_globals_table[] = {
@@ -43,6 +100,9 @@ STATIC const mp_rom_map_elem_t example_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_BeforeSend), MP_ROM_INT(BeforeSend) },
     { MP_ROM_QSTR(MP_QSTR_AfterSend), MP_ROM_INT(AfterSend) },
     { MP_ROM_QSTR(MP_QSTR_FreeRunning), MP_ROM_INT(FreeRunning) },
+
+    // objects
+    { MP_ROM_QSTR(MP_QSTR_PolarPoint), MP_ROM_PTR(&mp_type_polar_point) },
 };
 
 

@@ -19,6 +19,14 @@ class Shell(Prog):
 class TestDboxPy(unittest.TestCase):
     def test(self):
         prog = Prog("./dboxpy")
+        prog.stdin.write(b"""
+<xml>
+    <script output='a:int;b:float'>
+a = 10
+b = a * 2
+    </script>
+</xml>
+""")
         stdoutdata, stderrdata = prog.communicate()
 
 
@@ -209,6 +217,33 @@ print("return value:", example.BeforeSend)
         """)
         stdoutdata, stderrdata = shell.communicate()
         self.assertFalse(stderrdata)
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 1", stdoutdata)
+
+
+class TestUpyCClass(unittest.TestCase):
+
+    def test_c_initialize_default(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import example
+pp = example.PolarPoint()
+print("return value:", pp.radius)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 0", stdoutdata)
+
+    def test_c_initialize_with_values(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import example
+pp = example.PolarPoint(1, 2)
+print("return value:", pp.radius)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"return value: 1", stdoutdata)
 
