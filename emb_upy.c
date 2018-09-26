@@ -29,6 +29,10 @@ STATIC int handle_uncaught_exception(mp_obj_base_t *exc) {
     return 1;
 }
 
+//
+// GLOBAL FUNCTION
+//
+
 STATIC mp_obj_t log_10(mp_obj_t x_obj) {
     mp_float_t x = mp_obj_get_float(x_obj);
     mp_float_t res = log10(x);
@@ -37,6 +41,25 @@ STATIC mp_obj_t log_10(mp_obj_t x_obj) {
 }
 
 MP_DEFINE_CONST_FUN_OBJ_1(log_10_obj, log_10);
+
+//
+// GLOBAL DATA
+//
+
+typedef struct {
+    int m_int_1;
+    int m_int_2;
+} GlobalStruct;
+
+GlobalStruct g_global_struct = {
+    .m_int_1 = 10,
+    .m_int_2 = 20,
+};
+
+
+//
+// INTERPRETER
+//
 
 mp_obj_t execute_from_str(const char* const str) {
     nlr_buf_t nlr;
@@ -70,7 +93,10 @@ int setup(int argc, char *argv[]) {
     // Initialize interpreter
     mp_init();
 
+    // Injects some globals
     mp_store_global(QSTR_FROM_STR_STATIC("log_10"), MP_OBJ_FROM_PTR(&log_10_obj));
+    mp_store_global(QSTR_FROM_STR_STATIC("global_struct_ptr"), MP_ROM_INT(&g_global_struct));
+    mp_store_global(QSTR_FROM_STR_STATIC("global_struct_size"), MP_ROM_INT(sizeof(g_global_struct)));
     
     return 0;
 }

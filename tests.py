@@ -318,6 +318,63 @@ print("return value:", pp.new_attr)
         self.assertIn(b"return value: 3", stdoutdata)
 
 
+class TestUpyGlobalStructure(unittest.TestCase):
+    def test_py_defined_struct(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import uctypes
+buf = b"12345678abcd"
+struct = uctypes.struct(uctypes.addressof(buf), {"f32": uctypes.UINT32 | 0, "f64": uctypes.UINT64 | 4}, uctypes.LITTLE_ENDIAN)
+struct.f32 = 0x7fffffff
+print("return value:", buf)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: b'\\xff\\xff\\xff\\x7f5678abcd'", stdoutdata)
+
+    def test_c_defined_bytearray(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+print("global_struct_size:", global_struct_size)
+import uctypes
+buf = uctypes.bytearray_at(global_struct_ptr, global_struct_size)
+print("return value:", buf)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"global_struct_size: 8", stdoutdata)
+        self.assertIn(b"return value: bytearray(b'\\n\\x00\\x00\\x00\\x14\\x00\\x00\\x00')", stdoutdata)
+
+    def test_c_defined_bytearray_modified(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import uctypes
+buf = uctypes.bytearray_at(global_struct_ptr, global_struct_size)
+buf[0] = 0xff
+print("return value:", buf)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: bytearray(b'\\xff\\x00\\x00\\x00\\x14\\x00\\x00\\x00')", stdoutdata)
+
+    def test_c_defined_struct_modified(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import uctypes
+buf = uctypes.bytearray_at(global_struct_ptr, global_struct_size)
+global_struct = uctypes.struct(uctypes.addressof(buf), {"int_1": uctypes.INT32 | 0, "int_2": uctypes.INT32 | 4})
+global_struct.int_1 = 0x99887766
+print("return value:", buf)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: bytearray(b'fw\\x88\\x99\\x14\\x00\\x00\\x00')", stdoutdata)
+
+
 class TestLua(unittest.TestCase):
     def test_print(self):
         shell = Shell("lua")
