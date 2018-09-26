@@ -374,6 +374,31 @@ print("return value:", buf)
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"return value: bytearray(b'fw\\x88\\x99\\x14\\x00\\x00\\x00')", stdoutdata)
 
+    def test_c_defined_struct_slots(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import uctypes
+buf = uctypes.bytearray_at(global_struct_ptr, global_struct_size)
+global_struct = uctypes.struct(uctypes.addressof(buf), {"int_1": uctypes.INT32 | 0, "int_2": uctypes.INT32 | 4})
+global_struct.int_1 = 0x99
+print("return value:", global_struct.int_1, global_struct.int_2)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 153 20", stdoutdata)
+
+    def test_c_defined_struct_hidden(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+global_struct.int_1 = 0x99
+print("return value:", global_struct.int_1, global_struct.int_2)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 153 20", stdoutdata)
+
 
 class TestLua(unittest.TestCase):
     def test_print(self):

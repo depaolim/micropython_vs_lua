@@ -79,6 +79,25 @@ mp_obj_t execute_from_str(const char* const str) {
 }
 
 
+//
+// PYTHON SETUP COMMANDS
+//
+
+const char* const commands[] = {
+    "import uctypes",
+    "buf = uctypes.bytearray_at(global_struct_ptr, global_struct_size)",
+    "global_struct = uctypes.struct(uctypes.addressof(buf), {\"int_1\": uctypes.INT32 | 0, \"int_2\": uctypes.INT32 | 4})",
+    0,
+};
+
+
+void setup_python() {
+    for (const char* const* cmd = commands; *cmd; ++cmd) {
+        execute_from_str(*cmd);
+    }
+}
+
+
 int setup(int argc, char *argv[]) {
     g_argc = argc;
     g_argv = argv;
@@ -98,6 +117,8 @@ int setup(int argc, char *argv[]) {
     mp_store_global(QSTR_FROM_STR_STATIC("global_struct_ptr"), MP_ROM_INT(&g_global_struct));
     mp_store_global(QSTR_FROM_STR_STATIC("global_struct_size"), MP_ROM_INT(sizeof(g_global_struct)));
     
+    setup_python();
+
     return 0;
 }
 
