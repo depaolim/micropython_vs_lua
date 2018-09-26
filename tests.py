@@ -221,6 +221,33 @@ print("return value:", example.BeforeSend)
         self.assertIn(b"return value: 1", stdoutdata)
 
 
+class TestUpyPyClass(unittest.TestCase):
+    def test_class(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+class MyClass: pass
+mc = MyClass()
+print("return value:", mc)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: <MyClass object at", stdoutdata)
+
+    def test_class(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+class MyClass: pass
+mc = MyClass()
+mc.my_attr = 8
+print("return value:", mc.my_attr)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 8", stdoutdata)
+
+
 class TestUpyCClass(unittest.TestCase):
 
     def test_initialize_default(self):
@@ -256,6 +283,36 @@ pp.set_radius(3)
 print("return value:", pp.radius)
 """)
         stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 3", stdoutdata)
+
+    @unittest.skip("TODO")
+    def test_modify_attribute_from_python(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import example
+pp = example.PolarPoint(1, 2)
+pp.radius = 3
+print("return value:", pp.radius)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        print(stderrdata)
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 3", stdoutdata)
+
+    @unittest.skip("TODO")
+    def test_add_attribute_from_python(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import example
+pp = example.PolarPoint(1, 2)
+pp.new_attr = 3
+print("return value:", pp.new_attr)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        print(stderrdata)
         self.assertEqual(stderrdata, b"")
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"return value: 3", stdoutdata)
