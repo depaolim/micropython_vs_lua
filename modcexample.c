@@ -4,6 +4,10 @@
 #include "py/runtime.h"
 
 
+//
+// FUNCTION
+//
+
 // This is the function you will call using example.double(n).
 STATIC mp_obj_t example_double(mp_obj_t x_obj) {
     // Check input value and convert it to a C type.
@@ -16,11 +20,13 @@ STATIC mp_obj_t example_double(mp_obj_t x_obj) {
     return mp_obj_new_int(x + x);
 }
 
-
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(example_double_obj, example_double);
 
 
-// Some constants
+//
+// CONSTANTS
+//
+
 enum {
     Undefined        = 0x00,
     BeforeSend       = 0x01,
@@ -29,7 +35,9 @@ enum {
 };
 
 
-// New type
+//
+// CLASS
+//
 
 mp_obj_t mp_obj_new_polar_point(mp_float_t radius, mp_float_t theta);
 
@@ -38,7 +46,6 @@ typedef struct {
     mp_float_t radius;
     mp_float_t theta;
 } mp_obj_polar_point_t;
-
 
 STATIC mp_obj_t polar_point_make_new(const mp_obj_type_t *type_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     (void)type_in;
@@ -56,6 +63,30 @@ STATIC mp_obj_t polar_point_make_new(const mp_obj_type_t *type_in, size_t n_args
     }
 }
 
+STATIC mp_obj_t polar_point_set_radius(mp_obj_t self_in, mp_obj_t arg_in) {
+    mp_obj_polar_point_t *self = MP_OBJ_TO_PTR(self_in);
+    self->radius = mp_obj_get_float(arg_in);
+    return mp_const_none;
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(polar_point_set_radius_obj, polar_point_set_radius);
+
+STATIC const mp_rom_map_elem_t polar_point_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_set_radius), MP_ROM_PTR(&polar_point_set_radius_obj) },
+};
+
+STATIC MP_DEFINE_CONST_DICT(polar_point_locals_dict, polar_point_locals_dict_table);
+
+STATIC void polar_point_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest);
+
+const mp_obj_type_t mp_type_polar_point = {
+    { &mp_type_type },
+    .name = MP_QSTR_PolarPoint,
+    .make_new = polar_point_make_new,
+    .attr = polar_point_attr,
+    .locals_dict = (mp_obj_dict_t*)&polar_point_locals_dict,
+};
+
 STATIC void polar_point_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     if (dest[0] != MP_OBJ_NULL) {
         // not load attribute
@@ -66,16 +97,15 @@ STATIC void polar_point_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         dest[0] = mp_obj_new_float(self->radius);
     } else if (attr == MP_QSTR_theta) {
         dest[0] = mp_obj_new_float(self->theta);
+    } else {
+        mp_obj_type_t *type = mp_obj_get_type(self);
+        mp_map_t *locals_map = &(type->locals_dict->map);
+        mp_map_elem_t *elem = mp_map_lookup(locals_map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
+        if (elem != NULL) {
+            dest[0] = mp_obj_new_bound_meth(elem->value, self);
+        }
     }
 }
-
-const mp_obj_type_t mp_type_polar_point = {
-    { &mp_type_type },
-    .name = MP_QSTR_PolarPoint,
-    .make_new = polar_point_make_new,
-    .attr = polar_point_attr,
-};
-
 
 mp_obj_t mp_obj_new_polar_point(mp_float_t radius, mp_float_t theta) {
     mp_obj_polar_point_t *o = m_new_obj(mp_obj_polar_point_t);
@@ -86,13 +116,17 @@ mp_obj_t mp_obj_new_polar_point(mp_float_t radius, mp_float_t theta) {
 }
 
 
+//
+// MODULE
+//
+
 // Define all properties of the example module
 // All identifiers and strings are written as MP_QSTR_xxx and will be
 // optimized to word-sized integers by the build system (interned strings).
 STATIC const mp_rom_map_elem_t example_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_example) },
 
-    // methods
+    // functions
     { MP_ROM_QSTR(MP_QSTR_double), MP_ROM_PTR(&example_double_obj) },
 
     // constants
@@ -101,7 +135,7 @@ STATIC const mp_rom_map_elem_t example_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_AfterSend), MP_ROM_INT(AfterSend) },
     { MP_ROM_QSTR(MP_QSTR_FreeRunning), MP_ROM_INT(FreeRunning) },
 
-    // objects
+    // classes
     { MP_ROM_QSTR(MP_QSTR_PolarPoint), MP_ROM_PTR(&mp_type_polar_point) },
 };
 

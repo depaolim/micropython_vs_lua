@@ -223,7 +223,7 @@ print("return value:", example.BeforeSend)
 
 class TestUpyCClass(unittest.TestCase):
 
-    def test_c_initialize_default(self):
+    def test_initialize_default(self):
         shell = Shell("upy")
         shell.stdin.write(b"""
 import example
@@ -235,7 +235,7 @@ print("return value:", pp.radius)
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"return value: 0", stdoutdata)
 
-    def test_c_initialize_with_values(self):
+    def test_initialize_with_values(self):
         shell = Shell("upy")
         shell.stdin.write(b"""
 import example
@@ -246,6 +246,19 @@ print("return value:", pp.radius)
         self.assertEqual(stderrdata, b"")
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"return value: 1", stdoutdata)
+
+    def test_set_value_from_python(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"""
+import example
+pp = example.PolarPoint(1, 2)
+pp.set_radius(3)
+print("return value:", pp.radius)
+""")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(stderrdata, b"")
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"return value: 3", stdoutdata)
 
 
 class TestLua(unittest.TestCase):
