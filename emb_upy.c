@@ -7,6 +7,7 @@
 
 #include "py/obj.h"
 #include "py/compile.h"
+#include "py/persistentcode.h"
 #include "py/runtime.h"
 #include "py/gc.h"
 #include "py/stackctrl.h"
@@ -56,6 +57,7 @@ GlobalStruct g_global_struct = {
     .m_int_2 = 20,
 };
 
+#define MP_RAW_CODE_STORE_LOAD
 
 //
 // INTERPRETER
@@ -67,7 +69,16 @@ mp_obj_t execute_from_str(const char* const str) {
         qstr src_name = 1/*MP_QSTR_*/;
         mp_lexer_t *lex = mp_lexer_new_from_str_len(src_name, str, strlen(str), false);
         mp_parse_tree_t pt = mp_parse(lex, MP_PARSE_FILE_INPUT);
+
+#ifdef MP_RAW_CODE_STORE_LOAD
+        mp_raw_code_t *rc = mp_compile_to_raw_code(&pt, src_name, MP_EMIT_OPT_BYTECODE, false);
+        mp_raw_code_save_file(rc, "pippo.pyt");
+        mp_raw_code_t *rc_loaded = mp_raw_code_load_file("pippo.pyt");
+        mp_obj_t module_fun = mp_make_function_from_raw_code(rc_loaded, MP_OBJ_NULL, MP_OBJ_NULL);
+#else
         mp_obj_t module_fun = mp_compile(&pt, src_name, MP_EMIT_OPT_NONE, false);
+#endif
+
         mp_call_function_0(module_fun);
         nlr_pop();
         return 0;

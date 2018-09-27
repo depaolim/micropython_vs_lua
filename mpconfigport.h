@@ -86,6 +86,8 @@
 #define MICROPY_PY_UHEAPQ           (0)
 #define MICROPY_PY_UHASHLIB         (0)
 #define MICROPY_PY_UBINASCII        (0)
+#define MICROPY_PERSISTENT_CODE_SAVE  (1)
+#define MICROPY_PERSISTENT_CODE_LOAD  (1)
 
 extern const struct _mp_obj_module_t mp_module_os;
 extern const struct _mp_obj_module_t example_user_cmodule;
