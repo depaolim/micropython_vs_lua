@@ -1,3 +1,4 @@
+import os
 import subprocess
 import unittest
 
@@ -398,6 +399,53 @@ print("return value:", global_struct.int_1, global_struct.int_2)
         self.assertEqual(stderrdata, b"")
         self.assertEqual(shell.returncode, 0)
         self.assertIn(b"return value: 153 20", stdoutdata)
+
+
+class TestUpyMetaCommands(unittest.TestCase):
+    def setUp(self):
+        self.tmp_file_in = 'tmp_file.py'
+        self.tmp_file_out = 'tmp_file.mpy'
+        self.py_code = b"a = 10\nprint(a)\n"
+        self.mpy_code = b"\x4d\x03\x00\x3f\x1d\x02\x00\x00\x00\x00\x00\x07\x33\x00\x01\x00\x00\x00\xff\x8a\x24\x2d\x01\x1b\xee\x00\x1b\x2d\x01\x64\x01\x32\x11\x5b\x08\x3c\x6d\x6f\x64\x75\x6c\x65\x3e\x00\x01\x61\x05\x70\x72\x69\x6e\x74\x01\x61\x00\x00"
+
+    def tearDown(self):
+        try:
+            os.remove(self.tmp_file_in)
+        except FileNotFoundError:
+            pass
+        try:
+            os.remove(self.tmp_file_out)
+        except FileNotFoundError:
+            pass
+
+    def test_invalid_action(self):
+        shell = Shell("upy")
+        shell.stdin.write(b"\\x")
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(shell.returncode, 1)
+        self.assertIn(b"unknown action", stderrdata)
+
+    def test_store_mpy(self):
+        with open(self.tmp_file_in, "wb") as f:
+            f.write(self.py_code)
+        shell = Shell("upy")
+        shell.stdin.write(bytearray("\s {} {}".format(self.tmp_file_in, self.tmp_file_out), "utf8"))
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(shell.returncode, 0)
+        with open(self.tmp_file_out, "rb") as f:
+            buf = f.read()
+        self.assertEqual(buf, self.mpy_code)
+
+    def test_execute_mpy(self):
+        with open(self.tmp_file_out, "wb") as f:
+            f.write(self.mpy_code)
+        shell = Shell("upy")
+        shell.stdin.write(bytearray("\e {}".format(self.tmp_file_out), "utf8"))
+        stdoutdata, stderrdata = shell.communicate()
+        self.assertEqual(shell.returncode, 0)
+        self.assertEqual(shell.returncode, 0)
+        self.assertIn(b"10", stdoutdata)
+        self.assertIn(b"\\x4d\\x03\\x00\\x3f", stderrdata)
 
 
 class TestLua(unittest.TestCase):

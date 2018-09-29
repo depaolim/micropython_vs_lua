@@ -30,7 +30,7 @@ shell_upy: -lmicropython shell.o emb_upy.o modcexample.o
 
 emb_upy.o: emb_upy.c
 	git submodule update --init --recursive
-	gcc -std=c99 -c emb_upy.c -I$(MPTOP) -I. -DNO_QSTR -g
+	gcc -std=c99 -c emb_upy.c -I$(MPTOP) -I. -DNO_QSTR -g -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall
 
 modcexample.o: modcexample.c
 	git submodule update --init --recursive

@@ -57,28 +57,60 @@ GlobalStruct g_global_struct = {
     .m_int_2 = 20,
 };
 
-#define MP_RAW_CODE_STORE_LOAD
+//
+// UTILITIES
+//
+
+typedef struct {
+    byte *bytes;
+    long size;
+} buffer;
+
+void buffer_read_from_file(buffer *pBuffer, const char* const filename) {
+    FILE* f = fopen(filename, "r");
+    fseek(f, 0, SEEK_END);
+    pBuffer->size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    pBuffer->bytes = malloc(pBuffer->size + 1 * sizeof(byte));
+    fread(pBuffer->bytes, pBuffer->size, 1, f);
+    fclose(f);
+}
+
+void buffer_free(buffer *pBuffer) {
+    free(pBuffer->bytes);
+}
+
+void buffer_dump(buffer *pBuffer, FILE* f) {
+    for (int i = 0; i < pBuffer->size; i++) {
+        fprintf(f, "\\x%2.2x", pBuffer->bytes[i]);
+    }
+    fprintf(f, "\n");
+}
 
 //
 // INTERPRETER
 //
 
-mp_obj_t execute_from_str(const char* const str) {
+mp_parse_tree_t py_parse(const char* const str, long size) {
+    qstr src_name = 1/*MP_QSTR_*/;
+    mp_lexer_t *lex = mp_lexer_new_from_str_len(src_name, str, size, false);
+    return mp_parse(lex, MP_PARSE_FILE_INPUT);
+}
+
+void save_mpy(mp_parse_tree_t pt, const char* const filename) {
+    qstr src_name = 1/*MP_QSTR_*/;
+    mp_raw_code_t *rc = mp_compile_to_raw_code(&pt, src_name, MP_EMIT_OPT_BYTECODE, false);
+    mp_raw_code_save_file(rc, filename);
+}
+
+mp_obj_t load_mpy(buffer *pBuffer) {
+    mp_raw_code_t *rc_loaded = mp_raw_code_load_mem(pBuffer->bytes, pBuffer->size);
+    return mp_make_function_from_raw_code(rc_loaded, MP_OBJ_NULL, MP_OBJ_NULL);
+}
+
+mp_obj_t execute_mpy(mp_obj_t module_fun) {
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        qstr src_name = 1/*MP_QSTR_*/;
-        mp_lexer_t *lex = mp_lexer_new_from_str_len(src_name, str, strlen(str), false);
-        mp_parse_tree_t pt = mp_parse(lex, MP_PARSE_FILE_INPUT);
-
-#ifdef MP_RAW_CODE_STORE_LOAD
-        mp_raw_code_t *rc = mp_compile_to_raw_code(&pt, src_name, MP_EMIT_OPT_BYTECODE, false);
-        mp_raw_code_save_file(rc, "pippo.pyt");
-        mp_raw_code_t *rc_loaded = mp_raw_code_load_file("pippo.pyt");
-        mp_obj_t module_fun = mp_make_function_from_raw_code(rc_loaded, MP_OBJ_NULL, MP_OBJ_NULL);
-#else
-        mp_obj_t module_fun = mp_compile(&pt, src_name, MP_EMIT_OPT_NONE, false);
-#endif
-
         mp_call_function_0(module_fun);
         nlr_pop();
         return 0;
@@ -87,6 +119,66 @@ mp_obj_t execute_from_str(const char* const str) {
         handle_uncaught_exception((mp_obj_base_t*) nlr.ret_val);
         return (mp_obj_t)nlr.ret_val;
     }
+}
+
+mp_obj_t execute_py(const char* const str) {
+    mp_parse_tree_t pt = py_parse(str, strlen(str));
+    qstr src_name = 1/*MP_QSTR_*/;
+    mp_obj_t module_fun = mp_compile(&pt, src_name, MP_EMIT_OPT_NONE, false);
+    return execute_mpy(module_fun);
+}
+
+//
+// SHELL
+//
+
+mp_obj_t meta_actions(const char* const str) {
+    char action = str[0];
+    switch(action) {
+        // store mpy
+        case 's':
+            {
+                char input[20];
+                char output[20];
+                sscanf(str + 1, " %s %s", input, output);
+                fprintf(stderr, "args: '%s' '%s'\n", input, output);
+                buffer py;
+                buffer_read_from_file(&py, input);
+                save_mpy(py_parse((char*) py.bytes, py.size), output);
+                buffer_free(&py);
+            }
+            break;
+
+        // execute mpy
+        case 'e':
+            {
+                char input[20];
+                sscanf(str + 1, " %s", input);
+                fprintf(stderr, "args: '%s'\n", input);
+                buffer mpy;
+                buffer_read_from_file(&mpy, input);
+                fprintf(stderr, "bytes:");
+                buffer_dump(&mpy, stderr);
+                mp_obj_t module_fun = load_mpy(&mpy);
+                execute_mpy(module_fun);
+                buffer_free(&mpy);
+            }
+            break;
+
+        default:
+            fprintf(stderr, "unknown action\n");
+            exit(1);
+    }
+
+    return 0;
+}
+
+mp_obj_t execute_from_str(const char* const str) {
+    if (str[0] == '\\') {
+        return meta_actions(str + 1);
+    }
+    else
+        return execute_py(str);
 }
 
 
