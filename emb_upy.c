@@ -22,6 +22,7 @@ STATIC void stderr_print_strn(void *env, const char *str, size_t len) {
     fwrite(str, 1, len, stderr);
 }
 
+static
 const mp_print_t mp_stderr_print = {NULL, stderr_print_strn};
 
 STATIC int handle_uncaught_exception(mp_obj_base_t *exc) {
@@ -52,6 +53,7 @@ typedef struct {
     int m_int_2;
 } GlobalStruct;
 
+static
 GlobalStruct g_global_struct = {
     .m_int_1 = 10,
     .m_int_2 = 20,
@@ -66,6 +68,7 @@ typedef struct {
     long size;
 } buffer;
 
+static
 void buffer_read_from_file(buffer *pBuffer, const char* const filename) {
     FILE* f = fopen(filename, "r");
     fseek(f, 0, SEEK_END);
@@ -76,10 +79,12 @@ void buffer_read_from_file(buffer *pBuffer, const char* const filename) {
     fclose(f);
 }
 
+static
 void buffer_free(buffer *pBuffer) {
     free(pBuffer->bytes);
 }
 
+static
 void buffer_dump(buffer *pBuffer, FILE* f) {
     for (int i = 0; i < pBuffer->size; i++) {
         fprintf(f, "\\x%2.2x", pBuffer->bytes[i]);
@@ -91,23 +96,27 @@ void buffer_dump(buffer *pBuffer, FILE* f) {
 // INTERPRETER
 //
 
+static
 mp_parse_tree_t py_parse(const char* const str, long size) {
     qstr src_name = 1/*MP_QSTR_*/;
     mp_lexer_t *lex = mp_lexer_new_from_str_len(src_name, str, size, false);
     return mp_parse(lex, MP_PARSE_FILE_INPUT);
 }
 
+static
 void save_mpy(mp_parse_tree_t pt, const char* const filename) {
     qstr src_name = 1/*MP_QSTR_*/;
     mp_raw_code_t *rc = mp_compile_to_raw_code(&pt, src_name, MP_EMIT_OPT_BYTECODE, false);
     mp_raw_code_save_file(rc, filename);
 }
 
+static
 mp_obj_t load_mpy(buffer *pBuffer) {
     mp_raw_code_t *rc_loaded = mp_raw_code_load_mem(pBuffer->bytes, pBuffer->size);
     return mp_make_function_from_raw_code(rc_loaded, MP_OBJ_NULL, MP_OBJ_NULL);
 }
 
+static
 mp_obj_t execute_mpy(mp_obj_t module_fun) {
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
@@ -121,6 +130,7 @@ mp_obj_t execute_mpy(mp_obj_t module_fun) {
     }
 }
 
+static
 mp_obj_t execute_py(const char* const str) {
     mp_parse_tree_t pt = py_parse(str, strlen(str));
     qstr src_name = 1/*MP_QSTR_*/;
@@ -132,6 +142,7 @@ mp_obj_t execute_py(const char* const str) {
 // SHELL
 //
 
+static
 mp_obj_t meta_actions(const char* const str) {
     char action = str[0];
     switch(action) {
@@ -186,6 +197,7 @@ mp_obj_t execute_from_str(const char* const str) {
 // PYTHON SETUP COMMANDS
 //
 
+static
 const char* const commands[] = {
     "import uctypes",
     "buf = uctypes.bytearray_at(global_struct_ptr, global_struct_size)",
@@ -234,6 +246,7 @@ int execute(const char* const command) {
 }
 
 
+static
 int show_globals() {
     // UGLY FUNCTION just to check the final global state
     printf("float globals:\n");
