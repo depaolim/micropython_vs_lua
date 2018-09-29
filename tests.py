@@ -18,17 +18,10 @@ class Shell(Prog):
 
 
 class TestDboxPy(unittest.TestCase):
-    def test(self):
+    def test_timer(self):
         prog = Prog("./dboxpy")
-        prog.stdin.write(b"""
-<xml>
-    <script output='a:int;b:float'>
-a = 10
-b = a * 2
-    </script>
-</xml>
-""")
         stdoutdata, stderrdata = prog.communicate()
+        self.assertIn(b"nanoseconds", stdoutdata)
 
 
 class TestElements(unittest.TestCase):
